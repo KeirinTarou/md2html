@@ -14,6 +14,10 @@ class HeadingState:
         self.level_counts = {2: 0, 3: 0, 4: 0, 5: 0, 6: 0}
     
     def register(self, level: int) -> str:
+        # レベル2～6以外は無視
+        if level not in self.level_counts:
+            return ""
+
         # levelのカウンタを増やす
         self.level_counts[level] += 1
 
@@ -29,7 +33,7 @@ class HeadingState:
         return f"h{level}-" + "-".join(nums)
 
 
-def detect_line_tipe(line: str) -> str:
+def detect_line_type(line: str) -> str:
     """
     段落の種別を判定
 
@@ -95,6 +99,10 @@ def convert_2_heading(line: str, state: HeadingState, in_column: bool) -> str:
     if in_column:
         return f'<h{level}>{title}</h{level}>'
 
+    # 見出しレベル1とか7以上があったらid属性なしで返す
+    if level == 1 or level > 6:
+        return f'<h{level}>{title}</h{level}>'
+
     # id属性作成
     hid = state.register(level=level)
 
@@ -154,7 +162,7 @@ def convert_paragraphs(lines: List[str]) -> List[str]:
         # 改行を取り除く
         line = raw.rstrip("\n")
         # 行の種別を判定
-        lt = detect_line_tipe(line)
+        lt = detect_line_type(line)
         
         # コードブロック内である
         # 一切の加工は不要 -> そのままhtmlにappend
