@@ -73,6 +73,12 @@ def detect_line_type(line: str) -> str:
     if  stripped.startswith("---endbox"):
         return "column_end"
     
+    # テーブルブロック
+    if stripped.startswith("---tbl-from"):
+        return "table_start"
+    if stripped.startswith("---tbl-to"):
+        return "table_end"
+    
     # 上記のどれにも該当しない -> 通常の段落
     return "paragraph"
 
@@ -144,6 +150,43 @@ def convert_2_start_codeblock(line: str) -> Tuple[List[str], bool]:
 
     return html, folding
 
+def convert_table_block(lines: List[str]) -> List[str]:
+    """ 独自記法`---tbl-from`～`---tbl-to`で囲まれた部分をtableタグで囲む
+
+    :param lines: テーブル部分の行のリスト
+    :type lines: List[str]
+    :return: tableタグで囲んだテーブル要素の行のリスト
+    :rtype: List[str]
+    """
+    # 開始タグが先頭の要素
+    html = ['<table class="pastel-table">']
+    # ヘッダ行作成済みフラグ
+    header_done = False
+    for line in lines:
+        line = line.strip()
+        # 空行は無視
+        if not line:
+            continue
+        # Markdown風のセル分割
+        if not line.startswith("|") or not line.endswith("|"):
+            continue
+        cells = [cell.strip() for cell in line.strip("|").split("|")]
+        if not header_done:
+            html.append(f'{IND}<thead>')
+            html.append(f'{IND * 2}<tr>' + ''.join(f'<th>{c}</th>' for c in cells) + '</tr>')
+            html.append(f'{IND}</thead>')
+            html.append(f'{IND}<tbody>')
+            header_done = True
+        elif all(c.replace("-", "").replace(":", "") == "" for c in cells):
+            # タイトル行とデータ行の境目は無視
+            continue
+        else:
+            html.append(f'{IND * 2}' + ''.join(f'<td>{c}</td>' for c in cells) + '</tr>')
+    html.append(f'{IND * 2}</tbody>')
+    html.append('</table>')
+    # table要素内の各行を詰め込んだリストを返却
+    return html
+
 def convert_paragraphs(lines: List[str]) -> List[str]:
     """
     1行ずつ段落の種別を判定し、タグ付けして返す
@@ -156,8 +199,9 @@ def convert_paragraphs(lines: List[str]) -> List[str]:
     html = []
     state = HeadingState()
     in_codeblock = False
-    in_column = False
     in_blockquote = False
+    in_column = False
+    in_table = False
     folding = False
     for raw in lines:
         # 改行を取り除く
@@ -186,7 +230,7 @@ def convert_paragraphs(lines: List[str]) -> List[str]:
             continue
         
         # コードブロックでない
-        if lt == "paragraph":
+        if not in_table and lt == "paragraph":
             html.append(f"<p>{line}</p>")
         elif lt == "blank":
             pass
@@ -226,6 +270,18 @@ def convert_paragraphs(lines: List[str]) -> List[str]:
                 in_column = False
             else:
                 html.append(line)
+        elif lt == "table_start":
+            in_table = True
+            # テーブル要素用の行をため込むリストを用意
+            table_buffer = []
+        elif lt == "table_end":
+            in_table = False
+            # ため込んだテーブル要素用のリストを変換 -> 展開して追加
+            html.extend(convert_table_block(table_buffer))
+        else:
+            # テーブル行をスキャン中は各行をtable_bufferに追加
+            if in_table:
+                table_buffer.append(line)
 
     return html
 
