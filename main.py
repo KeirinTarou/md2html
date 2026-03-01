@@ -157,6 +157,7 @@ def convert_paragraphs(lines: List[str]) -> List[str]:
     state = HeadingState()
     in_codeblock = False
     in_column = False
+    in_blockquote = False
     folding = False
     for raw in lines:
         # 改行を取り除く
@@ -199,17 +200,51 @@ def convert_paragraphs(lines: List[str]) -> List[str]:
             in_codeblock = True
             tags, folding = convert_2_start_codeblock(line)
             html.extend(tags)
-
         elif lt == "blockquote_start":
-            pass
+            if not in_blockquote:
+                html.append('<blockquote>')
+                in_blockquote = True
+            # ブロッククォートがすでに開始していたらそのまま出力
+            else:
+                html.append(line)
         elif lt == "blockquote_end":
-            pass
+            if in_blockquote:
+                html.append("</blockquote>")
+                in_blockquote = False
+            # ブロッククォート内でなかったら無視してそのまま出力
+            else:
+                html.append(line)
         elif lt == "column_start":
-            pass
+            if not in_column:
+                html.append('<div class="pg-column">')
+                in_column = True
+            else:
+                html.append(line)
         elif lt == "column_end":
-            pass
+            if in_column:
+                html.append('</div>')
+                in_column = False
+            else:
+                html.append(line)
 
     return html
+
+def conv_md_2_html(src: Path, dest: Path):
+    # ソースファイルのテキスト行読み込み
+    lines = src.read_text(encoding='utf-8').splitlines()
+    # convert_paragraphs()でパース
+    html_lines = convert_paragraphs(lines)
+
+    # HTMLファイルとして書き出し
+    dest.write_text("\n".join(html_lines), encoding="utf-8")
+    print(f"[OK] {src.name} -> {dest}")
+
+def batch_convert(input_dir: Path, output_dir: Path):
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    for md_file in input_dir.glob("*.md"):
+        out_file = output_dir / (md_file.stem + ".html")
+        conv_md_2_html(md_file, out_file)
 
 lines = [
     "## ち～ん（笑）", 
@@ -227,6 +262,12 @@ lines = [
     "これはPythonのコードです。"
 ]
 
-html = convert_paragraphs(lines)
+# html = convert_paragraphs(lines)
+# print(html)
 
-print(html)
+BASE_DIR = Path(__file__).resolve().parent
+INPUT_DIR = BASE_DIR / "src"
+OUTPUT_DIR = BASE_DIR / "dest"
+
+if __name__ == "__main__":
+    batch_convert(INPUT_DIR, OUTPUT_DIR)
