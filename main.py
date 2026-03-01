@@ -171,17 +171,40 @@ def convert_table_block(lines: List[str]) -> List[str]:
         if not line.startswith("|") or not line.endswith("|"):
             continue
         cells = [cell.strip() for cell in line.strip("|").split("|")]
+
+        # ヘッダ行のパース
         if not header_done:
             html.append(f'{IND}<thead>')
             html.append(f'{IND * 2}<tr>' + ''.join(f'<th>{c}</th>' for c in cells) + '</tr>')
             html.append(f'{IND}</thead>')
             html.append(f'{IND}<tbody>')
             header_done = True
-        elif all(c.replace("-", "").replace(":", "") == "" for c in cells):
-            # タイトル行とデータ行の境目は無視
             continue
-        else:
-            html.append(f'{IND * 2}' + ''.join(f'<td>{c}</td>' for c in cells) + '</tr>')
+
+        # 区切り行 -> アラインメント情報取り出し -> 要素としては無視
+        if all(c.replace("-", "").replace(":", "") == "" for c in cells):
+        
+            def detect_alignment(cell: str) -> str:
+                cell = cell.strip()
+                if cell.startswith(":-") and cell.endswith("-:"):
+                    return "center"
+                elif cell.startswith(":-"):
+                    return "left"
+                elif cell.endswith("-:"):
+                    return "right"
+                return "left"
+            
+            alignments = [detect_alignment(c) for c in cells]
+            # パースはせずに次へ
+            continue
+
+        # ここまで来た -> データ行
+        row_html = []
+        for i, c in enumerate(cells):
+            align = alignments[i] if alignments else "left"
+            row_html.append(f'<td class="align-{align}">{c}</td>')
+        html.append(f'{IND * 2}<tr>' + ''.join(row_html) + '</tr>')
+    
     html.append(f'{IND * 2}</tbody>')
     html.append('</table>')
     # table要素内の各行を詰め込んだリストを返却
