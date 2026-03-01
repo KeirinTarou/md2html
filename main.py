@@ -2,6 +2,9 @@ import re
 from pathlib import Path
 from typing import List, Tuple
 
+# インデント
+IND = "    "    # 4 spaces
+
 # 見出し判定用正規表現オブジェクト
 RE_HEADING = re.compile(r'^(#{1,6})\s+(.+)$')
 
@@ -69,12 +72,16 @@ def detect_line_tipe(line: str) -> str:
     # 上記のどれにも該当しない -> 通常の段落
     return "paragraph"
 
-def convert_2_heading(line: str, state: HeadingState) -> str:
+def convert_2_heading(line: str, state: HeadingState, in_column: bool) -> str:
     """
     行のテキストに見出しタグを付ける
 
     :param line: 1行分のテキスト
     :type line: str
+    :param state: 見出しのナンバリングの状態
+    :type state: HeadingState
+    :param in_column: コラム内部かどうか
+    :type in_column: bool
     :return: 見出しタグで囲ったテキスト
     :rtype: str
     """
@@ -84,6 +91,10 @@ def convert_2_heading(line: str, state: HeadingState) -> str:
     # `## `の部分と見出し本体を分ける
     hashes, title = m.groups()
     level = len(hashes)
+    # コラム内部ではid属性不要
+    if in_column:
+        return f'<h{level}>{title}</h{level}>'
+
     # id属性作成
     hid = state.register(level=level)
 
@@ -115,13 +126,13 @@ def convert_2_start_codeblock(line: str) -> Tuple[List[str], bool]:
     #   - 折り畳みあり
     if folding:
         html.append("<details>")
-        html.append("   <summary>ソースコードを</summary>")
-        html.append('   <pre class="line-numbers">')
+        html.append(f"{IND}<summary>ソースコードを</summary>")
+        html.append(f'{IND}<pre class="line-numbers">')
     # - 折り畳みなし
     else:
         html.append('<pre class="line-numbers">')
     # codeタグ
-    html.append(f'      <code class="language-{lang}">')
+    html.append(f'{IND * 2}<code class="language-{lang}">')
 
     return html, folding
 
@@ -137,6 +148,7 @@ def convert_paragraphs(lines: List[str]) -> List[str]:
     html = []
     state = HeadingState()
     in_codeblock = False
+    in_column = False
     folding = False
     for raw in lines:
         # 改行を取り除く
@@ -152,12 +164,12 @@ def convert_paragraphs(lines: List[str]) -> List[str]:
             if lt == "code_fence":
                 # 折り畳みありのとき
                 if folding:
-                    html.append("       </code>")
-                    html.append("   </pre>")
+                    html.append(f"{IND * 2}</code>")
+                    html.append(f"{IND}</pre>")
                     html.append("</details>")
                 # 折り畳みなしのとき
                 else:
-                    html.append("   </code>")
+                    html.append(f"{IND}</code>")
                     html.append("</pre>")
                 in_codeblock = False
             else:
@@ -170,7 +182,7 @@ def convert_paragraphs(lines: List[str]) -> List[str]:
         elif lt == "blank":
             pass
         elif lt == "heading":
-            html.append(convert_2_heading(line, state))
+            html.append(convert_2_heading(line, state, in_column))
         elif lt == "quote":
             # `> `よりも後（3文字目以降）をblockquoteタグで包む
             html.append(f"<blockquote>{line[2:]}</blockquote>")
