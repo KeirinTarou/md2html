@@ -3,6 +3,7 @@ from typing import List, Tuple
 
 from md_extentions.common import IND
 from md_extentions.table_parser import convert_table_block
+from md_extentions.inline_parser import convert_inline
 
 # 見出し判定用正規表現オブジェクト
 RE_HEADING = re.compile(r'^(#{1,6})\s+(.+)$')
@@ -163,6 +164,8 @@ def convert_paragraphs(lines: List[str]) -> List[str]:
     in_blockquote = False
     in_column = False
     in_table = False
+    # テーブル要素用の行をため込むリストを用意
+    table_buffer = []
     folding = False
     for raw in lines:
         # 改行を取り除く
@@ -191,20 +194,24 @@ def convert_paragraphs(lines: List[str]) -> List[str]:
             continue
         
         # コードブロックでない
+        #   -> インライン書式を先に適用しておく
+        line = convert_inline(line)
+        # 通常の段落
         if not in_table and lt == "paragraph":
             html.append(f"<p>{line}</p>")
+        # 空白
         elif lt == "blank":
             pass
+        # 見出し
         elif lt == "heading":
             html.append(convert_2_heading(line, state, in_column))
-        elif lt == "quote":
-            # `> `よりも後（3文字目以降）をblockquoteタグで包む
-            html.append(f"<blockquote>{line[2:]}</blockquote>")
+        # コードブロック開始（```）
         elif lt == "code_fence":
             # コードブロックフラグを立てる
             in_codeblock = True
             tags, folding = convert_2_start_codeblock(line)
             html.extend(tags)
+        # ブロック引用開始（>>>）
         elif lt == "blockquote_start":
             if not in_blockquote:
                 html.append('<blockquote>')
@@ -212,6 +219,7 @@ def convert_paragraphs(lines: List[str]) -> List[str]:
             # ブロッククォートがすでに開始していたらそのまま出力
             else:
                 html.append(line)
+        # ブロック引用終了（<<<）: オリジナル
         elif lt == "blockquote_end":
             if in_blockquote:
                 html.append("</blockquote>")
@@ -219,26 +227,33 @@ def convert_paragraphs(lines: List[str]) -> List[str]:
             # ブロッククォート内でなかったら無視してそのまま出力
             else:
                 html.append(line)
+        # コラム部開始（---box）: オリジナル
         elif lt == "column_start":
             if not in_column:
                 html.append('<div class="pg-column">')
                 in_column = True
             else:
                 html.append(line)
+        # コラム部終了（---endbox）: オリジナル
         elif lt == "column_end":
             if in_column:
                 html.append('</div>')
                 in_column = False
             else:
                 html.append(line)
+        # テーブル開始（---tbl-from）: オリジナル
         elif lt == "table_start":
             in_table = True
-            # テーブル要素用の行をため込むリストを用意
-            table_buffer = []
+        # テーブル終了（---tbl-to）: オリジナル
         elif lt == "table_end":
             in_table = False
             # ため込んだテーブル要素用のリストを変換 -> 展開して追加
             html.extend(convert_table_block(table_buffer))
+        # 1行引用
+        elif lt == "quote":
+            # `> `よりも後（3文字目以降）をblockquoteタグで包む
+            html.append(f"<blockquote>{line[2:]}</blockquote>")
+        # その他（テーブル内など）
         else:
             # テーブル行をスキャン中は各行をtable_bufferに追加
             if in_table:
