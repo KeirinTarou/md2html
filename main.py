@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from md_extentions.spec.common import IND
-from md_extentions.block_parser import convert_paragraphs
+from md_extentions.parsers.block_parser import convert_paragraphs
 
 def conv_md_2_html(src: Path, dest: Path):
     # ソースファイルのテキスト行読み込み

@@ -5,8 +5,8 @@ from md_extentions.spec.common import IND
 from md_extentions.block_components.heading import (
     HeadingState, convert_2_heading, RE_HEADING
 )
-from md_extentions.table_parser import convert_table_block
-from md_extentions.inline_parser import convert_inline
+from md_extentions.parsers.table_parser import convert_table_block
+from md_extentions.parsers.inline_parser import convert_inline
 
 def detect_line_type(line: str) -> str:
     """
