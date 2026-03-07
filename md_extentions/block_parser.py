@@ -249,6 +249,8 @@ def convert_paragraphs(lines: List[str]) -> List[str]:
             in_table = False
             # ため込んだテーブル要素用のリストを変換 -> 展開して追加
             html.extend(convert_table_block(table_buffer))
+            # ここでため込んだテーブル要素用のリストをクリア
+            table_buffer.clear()
         # 1行引用
         elif lt == "quote":
             # `> `よりも後（3文字目以降）をblockquoteタグで包む
