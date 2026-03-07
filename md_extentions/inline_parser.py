@@ -49,8 +49,9 @@ def convert_inline(text: str) -> str:
     codes = []
 
     def code_repl(match):
+        idx = len(codes)
         codes.append(match.group(1))
-        return f"\uE000{len(codes) - 1}\uE000"
+        return f"\uE000CODE{idx}\uE000"
     
     text = RE_CODE.sub(code_repl, text)
 
@@ -102,7 +103,8 @@ def convert_inline(text: str) -> str:
 
     # 退避していたインラインコード文字列を復元
     for i, c in enumerate(codes):
-        text = text.replace(f"\uE000{i}\uE000", f"<code>{c}</code>")
+        token = f"\uE000CODE{i}\uE000"
+        text = text.replace(token, f"<code>{c}</code>")
     # 変換後の文字列を返却
     return text
     
