@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from md_extentions.common import IND
+from md_extentions.spec.common import IND
 from md_extentions.block_parser import convert_paragraphs
 
 def conv_md_2_html(src: Path, dest: Path):

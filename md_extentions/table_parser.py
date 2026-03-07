@@ -1,6 +1,6 @@
 import re
 from typing import List
-from md_extentions.common import IND, ESC_PIPE
+from md_extentions.spec.common import IND, ESC_PIPE
 
 RE_SEP = re.compile(r":?-{3,}:?")
 
