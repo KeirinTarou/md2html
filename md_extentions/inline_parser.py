@@ -2,6 +2,7 @@ import re
 
 from md_extentions.format_map import FORMAT_CLASS_MAP
 
+# オリジナル記法用
 r"""
     `@@{xl bold red}foobar2000@@`にマッチ
         - `([^\}]*)`
@@ -30,6 +31,18 @@ r"""
 RE_LINK = re.compile(
     r'\[([^\]]+)\]\(([^)]+)\)(?:\{([^}]+)\})?'
 )
+# strong用
+r"""
+    `**text**`または`__text__`にマッチ
+        - `(\*\*|__)`: `**`または`__`にマッチ -> キャプチャ(1)
+        - `(.+?)`: 任意の1文字の繰り返しに非貪欲マッチ -> キャプチャ(2)
+"""
+RE_STRONG = re.compile(r'(\*\*|__)(.+?)\1')
+# em用
+r"""
+    `*text*`または`_text_`にマッチ
+"""
+RE_EM = re.compile(r'(\*|_)(.+?)\1')
 
 def convert_inline(text: str) -> str:
 
@@ -52,7 +65,12 @@ def convert_inline(text: str) -> str:
             attrs += ' target="_blank" rel="noopener"'
 
         return f'<a {attrs}>{label}</a>'
-
+    
+    def strong_repl(match):
+        return f"<strong>{match.group(2)}</strong>"
+    
+    def em_repl(match):
+        return f"<em>{match.group(2)}</em>"
 
     def repl(match):
         """ 対象文字列をクラス属性付きspanで囲む
@@ -73,10 +91,14 @@ def convert_inline(text: str) -> str:
         #   -> <span class="f-sz-xl fst-bold fc-red">foobar2000</span>
         return f'<span class="{class_attr}">{content}</span>'
     
-    # インライン書式を適用
+    # 独自記法のインライン書式を適用
     text = RE_INLINE.sub(repl, text)
     # リンク変換
     text = RE_LINK.sub(link_repl, text)
+    # strong要素
+    text = RE_STRONG.sub(strong_repl, text)
+    # em要素
+    text = RE_EM.sub(em_repl, text)
 
     # 退避していたインラインコード文字列を復元
     for i, c in enumerate(codes):
