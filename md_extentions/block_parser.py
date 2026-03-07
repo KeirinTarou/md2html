@@ -2,35 +2,11 @@ import re
 from typing import List, Tuple
 
 from md_extentions.common import IND
+from md_extentions.block_components.heading import (
+    HeadingState, convert_2_heading, RE_HEADING
+)
 from md_extentions.table_parser import convert_table_block
 from md_extentions.inline_parser import convert_inline
-
-# 見出し判定用正規表現オブジェクト
-RE_HEADING = re.compile(r'^(#{1,6})\s+(.+)$')
-
-# 見出しレベルの状態を保持するクラス
-class HeadingState:
-    def __init__(self):
-        self.level_counts = {2: 0, 3: 0, 4: 0, 5: 0, 6: 0}
-    
-    def register(self, level: int) -> str:
-        # レベル2～6以外は無視
-        if level not in self.level_counts:
-            return ""
-
-        # levelのカウンタを増やす
-        self.level_counts[level] += 1
-
-        # levelより深い階層はリセット
-        for lv in range(level + 1, 7):
-            self.level_counts[lv] = 0
-        
-        # id属性値組み立て
-        nums = []
-        for lv in range(2, level + 1):
-            nums.append(str(self.level_counts[lv]))
-        # `h3-1-2`のような文字列を返す
-        return f"h{level}-" + "-".join(nums)
 
 def detect_line_type(line: str) -> str:
     """
@@ -90,38 +66,6 @@ def detect_line_type(line: str) -> str:
     
     # 上記のどれにも該当しない -> 通常の段落
     return "paragraph"
-
-def convert_2_heading(line: str, state: HeadingState, in_column: bool) -> str:
-    """
-    行のテキストに見出しタグを付ける
-
-    :param line: 1行分のテキスト
-    :type line: str
-    :param state: 見出しのナンバリングの状態
-    :type state: HeadingState
-    :param in_column: コラム内部かどうか
-    :type in_column: bool
-    :return: 見出しタグで囲ったテキスト
-    :rtype: str
-    """
-    m = RE_HEADING.match(line.strip())
-    if not m:
-        return line
-    # `## `の部分と見出し本体を分ける
-    hashes, title = m.groups()
-    level = len(hashes)
-    # コラム内部ではid属性不要
-    if in_column:
-        return f'<h{level}>{title}</h{level}>'
-
-    # 見出しレベル1とか7以上があったらid属性なしで返す
-    if level == 1 or level > 6:
-        return f'<h{level}>{title}</h{level}>'
-
-    # id属性作成
-    hid = state.register(level=level)
-
-    return f'<h{level} id="{hid}">{title}</h{level}>'
 
 def convert_2_start_codeblock(line: str) -> Tuple[List[str], bool]:
     """ 3連バッククォートに出会ったときの処理
