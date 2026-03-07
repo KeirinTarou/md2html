@@ -14,17 +14,45 @@ r"""
             - `?`: 
 """
 RE_INLINE = re.compile(r'@@\{([^}]*)\}(.+?)@@', re.S)
+# インラインコード用
 RE_CODE = re.compile(r'`([^`]+)`')
+# リンク用
+r"""
+    `[text](url){option}`にマッチ
+        - `\[([^]]+)\]`: `[]`で囲まれた`]`以外の文字1文字以上にマッチ
+            - `[]`の中身をキャプチャ(1) -> リンクテキスト
+        - `\(([^)]+)\)`: `()`で囲まれた`)`以外の文字1文字以上にマッチ
+            - `()`の中身をキャプチャ(2) -> リンクURL
+        - `(?:\{([^}]+)\})?`: `{}`で囲まれた`}`以外の文字1文字以上にマッチ
+            - ただし、あってもなくても良い
+            - `{}`の中身をキャプチャ(3) -> オプション指定
+"""
+RE_LINK = re.compile(
+    r'\[([^\]]+)\]\(([^)]+)\)(?:\{([^}]+)\})?'
+)
 
 def convert_inline(text: str) -> str:
 
     codes = []
 
-    def code_repl(m):
-        codes.append(m.group(1))
+    def code_repl(match):
+        codes.append(match.group(1))
         return f"\uE000{len(codes) - 1}\uE000"
     
     text = RE_CODE.sub(code_repl, text)
+
+    def link_repl(match):
+        label = match.group(1)
+        url = match.group(2)
+        opt = match.group(3)
+
+        attrs = f'href="{url}"'
+
+        if opt == "blank":
+            attrs += ' target="_blank" rel="noopener"'
+
+        return f'<a {attrs}>{label}</a>'
+
 
     def repl(match):
         """ 対象文字列をクラス属性付きspanで囲む
@@ -45,7 +73,10 @@ def convert_inline(text: str) -> str:
         #   -> <span class="f-sz-xl fst-bold fc-red">foobar2000</span>
         return f'<span class="{class_attr}">{content}</span>'
     
+    # インライン書式を適用
     text = RE_INLINE.sub(repl, text)
+    # リンク変換
+    text = RE_LINK.sub(link_repl, text)
 
     # 退避していたインラインコード文字列を復元
     for i, c in enumerate(codes):
