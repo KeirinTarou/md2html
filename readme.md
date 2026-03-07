@@ -1,0 +1,89 @@
+## 使い方 How to use
+### 基本仕様
+- 基本的には通常のMarkdownを踏襲
+    - `_text_`: `<em></em>`
+    - `__text__`: `<strong></strong>`
+    - バッククォートで括る: `<code>code</code>`
+    - `# `, `## `, ...: 見出し
+    - `> `: 単行引用
+    - `- `: bullet list
+    - `1. `, `2. `, ...: number list
+        - ただし、Markdown側の使用番号にかかわらず1., 2., 3., ...になる
+
+### 独自仕様
+- ブロック引用
+    - `>>>`と`<<<`で囲む
+```bash
+>>>
+paragraph
+paragraph
+...
+<<<
+```
+
+- コラム
+    - `---box`と`---endbox`で囲む
+    - コラム内では見出しにid属性は付与しない
+```bash
+---box
+paragraph
+paragraph
+...
+---endbox
+```
+
+- テーブル
+    - `---tbl-from`と`---tbl-to`で囲む
+    - 表自体の書き方は通常のMarkdownと同じ
+```bash
+---tbl-from
+| default align | align-left | align-center | align-right |
+| --- | :--- | :---: | ---: |
+| default | left | center | right |
+---tbl-to
+```
+
+- インライン書式
+    - `@@{key1 key2 key3 ...}text@@`の形で書式を指定する
+    - 書式指定文字列は次のとおり
+```py
+FORMAT_CLASS_MAP = {
+    "xl": "f-sz-xl", 
+    "lg": "f-sz-lg", 
+    "sm": "f-sz-sm", 
+    "xs": "f-sz-xs", 
+
+    "white": "fc-white", 
+    "silver": "fc-silver", 
+    "red": "fc-red", 
+    "tomato": "fc-tomato", 
+    "orange": "fc-orange", 
+    "gold": "fc-gold", 
+    "deeppink": "fc-deeppink", 
+    "yellow": "fc-yellow", 
+    "lime": "fc-lime", 
+    "cyan": "fc-cyan", 
+    "skyblue": "fc-skyblue", 
+    
+    "strike": "fst-strike", 
+    "bold": "fst-bold", 
+    "italic": "fst-italic", 
+
+    "bg-black": "bg-black", 
+    "bg-white": "bg-white", 
+    "bg-darkgray": "bg-darkgray", 
+    "bg-red": "bg-red", 
+    "bg-tomato": "bg-tomato", 
+    "bg-gold": "bg-gold", 
+    "bg-blue": "bg-blue", 
+    "bg-yellow": "bg-yellow", 
+    "bg-orange": "bg-orange", 
+    "bg-pastelpink": "bg-pastelpink", 
+    "bg-pastelorange": "bg-pastelorange", 
+    "bg-pastelyellow": "bg-pastelyellow", 
+    "bg-pastellemon": "bg-pastellemon", 
+    "bg-pastelgreen": "bg-pastelgreen", 
+    "bg-pastelblue": "bg-pastelblue", 
+    "bg-pastelpurple": "bg-pastelpurple", 
+}
+```
