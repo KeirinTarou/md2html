@@ -1,12 +1,12 @@
 import re
 from typing import List, Tuple
 
-from md_extentions.spec.common import IND
-from md_extentions.components.heading import (
+from md_extensions.spec.common import IND
+from md_extensions.components.heading import (
     HeadingState, convert_2_heading, RE_HEADING
 )
-from md_extentions.parsers.table_parser import convert_table_block
-from md_extentions.parsers.inline_parser import convert_inline
+from md_extensions.parsers.table_parser import convert_table_block
+from md_extensions.parsers.inline_parser import convert_inline
 
 def detect_line_type(line: str) -> str:
     """

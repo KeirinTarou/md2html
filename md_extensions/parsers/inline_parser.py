@@ -1,6 +1,6 @@
 import re
 
-from md_extentions.spec.format_map import FORMAT_CLASS_MAP
+from md_extensions.spec.format_map import FORMAT_CLASS_MAP
 
 # オリジナル記法用
 r"""
