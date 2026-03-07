@@ -46,18 +46,7 @@ def detect_line_type(line: str) -> str:
     if stripped == "":
         return "blank"
     
-    # コードブロック開始/終了（```）
-    if stripped.startswith("```"):
-        return "code_fence"
-    
-    # 見出し（`# `, `## `, ...）
-    if bool(RE_HEADING.match(stripped)):
-        return "heading"
-
-    # 単一引用
-    if stripped.startswith("> "):
-        return "quote"
-    
+    # 独自記法を先に判定する
     # ブロック引用の開始/終了
     #   - 独自記法
     if stripped.startswith(">>>"):
@@ -73,10 +62,31 @@ def detect_line_type(line: str) -> str:
         return "column_end"
     
     # テーブルブロック
+    #   - 独自記法
     if stripped.startswith("---tbl-from"):
         return "table_start"
     if stripped.startswith("---tbl-to"):
         return "table_end"
+    
+    # コードブロック開始/終了（```）
+    if stripped.startswith("```"):
+        return "code_fence"
+    
+    # 見出し（`# `, `## `, ...）
+    if bool(RE_HEADING.match(stripped)):
+        return "heading"
+
+    # 単一引用
+    if stripped.startswith("> "):
+        return "quote"
+    
+    # 箇条書き
+    if stripped.startswith("- "):
+        return "bullet_list"
+
+    # 番号箇条書き
+    if re.match(r"\d+\.\s+", stripped):
+        return "number_list"
     
     # 上記のどれにも該当しない -> 通常の段落
     return "paragraph"
@@ -164,8 +174,13 @@ def convert_paragraphs(lines: List[str]) -> List[str]:
     in_blockquote = False
     in_column = False
     in_table = False
+    in_bullet_list = False
+    in_number_list = False
     # テーブル要素用の行をため込むリストを用意
     table_buffer = []
+    # 箇条書きの`li`をため込むリストを用意
+    bullet_list_buffer = []
+    number_list_buffer = []
     folding = False
     for raw in lines:
         # 改行を取り除く
@@ -196,6 +211,21 @@ def convert_paragraphs(lines: List[str]) -> List[str]:
         # コードブロックでない
         #   -> インライン書式を先に適用しておく
         line = convert_inline(line)
+
+        # 箇条書きが終了していたら、箇条書きを畳んでから次へ
+        if in_bullet_list and (lt != "bullet_list"):
+            for item in bullet_list_buffer:
+                html.append(f"{IND}<li>{item}</li>")
+            html.append("</ul>")
+            in_bullet_list = False
+            bullet_list_buffer.clear()
+        if in_number_list and (lt != "number_list"):
+            for item in number_list_buffer:
+                html.append(f"{IND}<li>{item}</li>")
+            html.append("</ol>")
+            in_number_list = False
+            number_list_buffer.clear()
+
         # 通常の段落
         if not in_table and lt == "paragraph":
             html.append(f"<p>{line}</p>")
@@ -255,10 +285,38 @@ def convert_paragraphs(lines: List[str]) -> List[str]:
         elif lt == "quote":
             # `> `よりも後（3文字目以降）をblockquoteタグで包む
             html.append(f"<blockquote>{line[2:]}</blockquote>")
+        # 箇条書き
+        elif lt == "bullet_list":
+            # まだ`in_list`フラグが立っていないとき
+            #   -> リスト行開始
+            if not in_bullet_list:
+                in_bullet_list = True
+                html.append("<ul>")
+            # li要素をため込んでいく
+            # bullet-listの場合は3文字目以降固定で良い
+            bullet_list_buffer.append(f"{line[2:]}")
+        # 番号箇条書き
+        elif lt == "number_list":
+            if not in_number_list:
+                in_number_list = True
+                html.append("<ol>")
+            pos = line.find(" ")
+            number_list_buffer.append(f"{line[pos + 1:]}")
         # その他（テーブル内など）
         else:
             # テーブル行をスキャン中は各行をtable_bufferに追加
             if in_table:
                 table_buffer.append(line)
 
+    # この時点で箇条書きがフラグが立っているとき
+    #   -> ul or olを作って追加
+    if in_bullet_list: 
+        for item in bullet_list_buffer:
+            html.append(f"{IND}<li>{item}</li>")
+        html.append("</ul>")
+    if in_number_list: 
+        for item in number_list_buffer:
+            html.append(f"{IND}<li>{item}</li>")
+        html.append("</ol>")
+    
     return html
