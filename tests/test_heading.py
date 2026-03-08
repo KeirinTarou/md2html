@@ -4,6 +4,10 @@ from md_extensions.components.heading import (
     HeadingState, convert_2_heading
 )
 
+def run_headings(lines, in_column):
+    state = HeadingState()
+    return [convert_2_heading(line, state, in_column) for line in lines]
+
 @pytest.mark.parametrize(
     "line, expected, in_column", [
         ("## A", '<h2 id="h2-1">A</h2>', False),  
@@ -11,10 +15,7 @@ from md_extensions.components.heading import (
     ]
 )
 def test_heading(line, expected, in_column):
-    state = HeadingState()
-    html = convert_2_heading(line, state, in_column)
-
-    assert html == expected
+    assert run_headings([line], in_column)[0] == expected
 
 @pytest.mark.parametrize(
     "lines, expected, in_column", 
@@ -58,10 +59,4 @@ def test_heading(line, expected, in_column):
     ]
 )
 def test_headings(lines, expected, in_column):
-    state = HeadingState()
-    result = []
-    for line in lines:
-        html = convert_2_heading(line, state, in_column)
-        result.append(html)
-    
-    assert result == expected
+    assert run_headings(lines, in_column) == expected
