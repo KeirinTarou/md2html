@@ -35,4 +35,4 @@ def test_heading_in_column():
     # Act
     html = convert_2_heading("## Title", state, True)
     # Assert
-    assert html == "<h2>Title<</h2>"
+    assert html == "<h2>Title</h2>"
