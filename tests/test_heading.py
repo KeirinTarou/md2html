@@ -10,8 +10,14 @@ def run_headings(lines, in_column):
 
 @pytest.mark.parametrize(
     "line, expected, in_column", [
-        ("## A", '<h2 id="h2-1">A</h2>', False),  
-        ("## Title", "<h2>Title</h2>", True), 
+        pytest.param(
+            "## A", '<h2 id="h2-1">A</h2>', False, 
+            id="not_in_column"
+        ),   
+        pytest.param(
+            "## Title", "<h2>Title</h2>", True, 
+            id="in_column"
+        ), 
     ]
 )
 def test_heading(line, expected, in_column):
@@ -20,41 +26,55 @@ def test_heading(line, expected, in_column):
 @pytest.mark.parametrize(
     "lines, expected, in_column", 
     [
-        (
+        pytest.param(
             ["## A", "### B", "### C"], 
             [
                 '<h2 id="h2-1">A</h2>', 
                 '<h3 id="h3-1-1">B</h3>', 
                 '<h3 id="h3-1-2">C</h3>', 
             ], 
-            False
+            False, 
+            id="normal_hierarchy",  
         ), 
-        (
+        pytest.param(
             ["## A", "### B", "## C"], 
             [
                 '<h2 id="h2-1">A</h2>', 
                 '<h3 id="h3-1-1">B</h3>', 
                 '<h2 id="h2-2">C</h2>', 
             ], 
-            False
+            False, 
+            id="reset_to_h2"
         ), 
-        (
+        pytest.param(
             ["## A", "### B", "#### C"], 
             [
                 '<h2 id="h2-1">A</h2>', 
                 '<h3 id="h3-1-1">B</h3>', 
                 '<h4 id="h4-1-1-1">C</h4>', 
             ],
-            False
+            False, 
+            id="descending_h2_to_h4"
         ), 
-        (
+        pytest.param(
             ["## A", "### B", "## C"], 
             [
                 "<h2>A</h2>", 
                 "<h3>B</h3>", 
                 "<h2>C</h2>", 
             ], 
-            True
+            True, 
+            id="headers_in_column"
+        ), 
+        pytest.param(
+            ["## A", "##### B{list-1}", "## C"], 
+            [
+                '<h2 id="h2-1">A</h2>', 
+                '<h5 id="list-1">B</h5>', 
+                '<h2 id="h2-2">C</h2>', 
+            ], 
+            False, 
+            id="override_id_attr"
         ), 
     ]
 )
