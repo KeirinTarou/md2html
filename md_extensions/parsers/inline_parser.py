@@ -1,6 +1,7 @@
 import re
 
 from md_extensions.spec.format_map import FORMAT_CLASS_MAP
+from md_extensions.spec.common import (ESC_STAR, ESC_UNDER)
 
 # オリジナル記法用
 r"""
@@ -45,6 +46,9 @@ r"""
 RE_EM = re.compile(r'(\*|_)(.+?)\1')
 
 def convert_inline(text: str) -> str:
+    # エスケープされた特殊文字（`_`, `*`）を退避
+    text = text.replace(r"\*", ESC_STAR)
+    text = text.replace(r"\_", ESC_UNDER)
 
     codes = []
 
@@ -105,6 +109,11 @@ def convert_inline(text: str) -> str:
     for i, c in enumerate(codes):
         token = f"\uE000CODE{i}\uE000"
         text = text.replace(token, f"<code>{c}</code>")
+
+    # エスケープしていた特殊文字を復元
+    text = text.replace(ESC_STAR, "*")
+    text = text.replace(ESC_UNDER, "_")
+
     # 変換後の文字列を返却
     return text
     
