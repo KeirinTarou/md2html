@@ -50,6 +50,13 @@ def convert_2_heading(line: str, state: HeadingState, in_column: bool) -> str:
     # コラム内部ではid属性不要
     if in_column:
         return f'<h{level}>{title}</h{level}>'
+    
+    # {}でid属性が指定されていたらそれを使う
+    if title.strip().endswith("}") and "{" in title:
+        text, id_part = title.rsplit("{", 1)
+        custom_id = id_part[:-1]
+        text = text.strip()
+        return f'<h{level} id="{custom_id}">{text}</h{level}>'
 
     # 見出しレベル1とか7以上があったらid属性なしで返す
     if level == 1 or level > 6:
