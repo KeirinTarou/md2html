@@ -13,6 +13,7 @@ from md_extensions.parsers.inline_parser import convert_inline
         (r"**bold *italic* bold**", "<strong>bold <em>italic</em> bold</strong>"), 
         (r"**bold _italic_ bold**", "<strong>bold <em>italic</em> bold</strong>"), 
         (r"Shift\_JIS is a Shift\_JIS.", "Shift_JIS is a Shift_JIS."), 
+        (r"\* \_ \` \[ \] \( \)", "* _ ` [ ] ( )"), 
     ]
 )
 def test_inline(src, expected):
