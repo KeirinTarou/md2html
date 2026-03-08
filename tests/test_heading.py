@@ -1,38 +1,67 @@
+import pytest
+
 from md_extensions.components.heading import (
     HeadingState, convert_2_heading
 )
 
-def test_simple_h2():
-    # Arrange
+@pytest.mark.parametrize(
+    "line, expected, in_column", [
+        ("## A", '<h2 id="h2-1">A</h2>', False),  
+        ("## Title", "<h2>Title</h2>", True), 
+    ]
+)
+def test_heading(line, expected, in_column):
     state = HeadingState()
-    # Act
-    html = convert_2_heading("## Title", state, False)
-    # Assert
-    assert html == '<h2 id="h2-1">Title</h2>'
+    html = convert_2_heading(line, state, in_column)
 
-def test_h2_counter_increment():
-    # Arrange
-    state = HeadingState()
-    # Act
-    html1 = convert_2_heading("## A", state, False)
-    html2 = convert_2_heading("## B", state, False)
-    # Assert
-    assert html1 == '<h2 id="h2-1">A</h2>'
-    assert html2 == '<h2 id="h2-2">B</h2>'
+    assert html == expected
 
-def test_nested_heading():
-    # Arrange
+@pytest.mark.parametrize(
+    "lines, expected, in_column", 
+    [
+        (
+            ["## A", "### B", "### C"], 
+            [
+                '<h2 id="h2-1">A</h2>', 
+                '<h3 id="h3-1-1">B</h3>', 
+                '<h3 id="h3-1-2">C</h3>', 
+            ], 
+            False
+        ), 
+        (
+            ["## A", "### B", "## C"], 
+            [
+                '<h2 id="h2-1">A</h2>', 
+                '<h3 id="h3-1-1">B</h3>', 
+                '<h2 id="h2-2">C</h2>', 
+            ], 
+            False
+        ), 
+        (
+            ["## A", "### B", "#### C"], 
+            [
+                '<h2 id="h2-1">A</h2>', 
+                '<h3 id="h3-1-1">B</h3>', 
+                '<h4 id="h4-1-1-1">C</h4>', 
+            ],
+            False
+        ), 
+        (
+            ["## A", "### B", "## C"], 
+            [
+                "<h2>A</h2>", 
+                "<h3>B</h3>", 
+                "<h2>C</h2>", 
+            ], 
+            True
+        ), 
+    ]
+)
+def test_headings(lines, expected, in_column):
     state = HeadingState()
-    # Act
-    convert_2_heading("## A", state, False)
-    html = convert_2_heading("### B", state, False)
-    # Assert
-    assert html == '<h3 id="h3-1-1">B</h3>'
-
-def test_heading_in_column():
-    # Arrange
-    state = HeadingState()
-    # Act
-    html = convert_2_heading("## Title", state, True)
-    # Assert
-    assert html == "<h2>Title</h2>"
+    result = []
+    for line in lines:
+        html = convert_2_heading(line, state, in_column)
+        result.append(html)
+    
+    assert result == expected
