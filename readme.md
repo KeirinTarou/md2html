@@ -21,6 +21,8 @@ python main.py
     - `1. `, `2. `, ...: number list
         - ただし、Markdown側の使用番号にかかわらず1., 2., 3., ...になる
     - 特殊文字は`\`でエスケープ可能
+    - `[Google](https://google.com)`: `<a href="https://google.com">Google</a>`
+        - `[Google](https://google.com){blank}`とすれば、`target="_blank"`を追加
 
 ### 独自仕様
 - 見出しのid属性
