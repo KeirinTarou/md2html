@@ -1,4 +1,15 @@
 ## 使い方 How to use
+- `md2html`プロジェクトフォルダ内の`parser`フォルダをカレントディレクトリにする。
+- `parser/src`フォルダ直下に`.md`ファイルを置く。
+- 次のコマンドでスクリプトを実行する。
+```bash
+python main.py
+```
+- `src`フォルダ直下の`.md`ファイルを`.html`に変換する。
+- 変換後の`.html`ファイルは`parser/dest`フォルダ内に生える。
+- `parser/dest`フォルダにある`template.html`に内容を貼り付けると、ざっくりとした表示イメージをブラウザで確認できる。
+- Gitのリポジトリは`parser`フォルダ。
+
 ### 基本仕様
 - 基本的には通常のMarkdownを踏襲
     - `_text_`: `<em></em>`
