@@ -93,13 +93,13 @@ def convert_2_start_codeblock(line: str) -> Tuple[List[str], bool]:
     #   - 折り畳みあり
     if folding:
         html.append("<details>")
-        html.append(f"{IND}<summary>ソースコードを</summary>")
-        html.append(f'{IND}<pre class="line-numbers">')
+        html.append("<summary>ソースコードを</summary>")
+        html.append('<pre class="line-numbers">')
     # - 折り畳みなし
     else:
         html.append('<pre class="line-numbers">')
     # codeタグ
-    html.append(f'{IND * 2}<code class="language-{lang}">')
+    html.append(f'<code class="language-{lang}">')
 
     return html, folding
 
@@ -140,12 +140,12 @@ def convert_paragraphs(lines: List[str]) -> List[str]:
             if lt == "code_fence":
                 # 折り畳みありのとき
                 if folding:
-                    html.append(f"{IND * 2}</code>")
-                    html.append(f"{IND}</pre>")
+                    html.append("</code>")
+                    html.append("</pre>")
                     html.append("</details>")
                 # 折り畳みなしのとき
                 else:
-                    html.append(f"{IND}</code>")
+                    html.append("</code>")
                     html.append("</pre>")
                 in_codeblock = False
             else:
