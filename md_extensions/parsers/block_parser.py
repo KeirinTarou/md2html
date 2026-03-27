@@ -151,7 +151,7 @@ def convert_paragraphs(lines: List[str]) -> List[str]:
                     html.append("</pre>")
                 in_codeblock = False
             else:
-                html.append(line)
+                codeblock_buffer.append(line)
             continue
         
         # コードブロックでない
