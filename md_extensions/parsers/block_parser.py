@@ -142,19 +142,28 @@ def convert_paragraphs(lines: List[str]) -> List[str]:
             # 閉じ3連バッククォートが来た
             #   -> 閉じタグに変換してフラグを倒す
             if lt == "code_fence":
+                # 開始3連バッククォートを開始タグに変換
                 tags, folding = convert_2_start_codeblock(code_fence_open_line)
                 html.extend(tags)
                 # ため込んでいたコードブロックの内容を展開
-                for item in codeblock_buffer:
+                # コードブロックの1行目は`<code>`の直後に追記
+                html[-1] += codeblock_buffer[0]
+                # 2行目以降はふつうにリスト`html`に追加
+                for item in codeblock_buffer[1:-1]:
                     html.append(item)
-
+                # 最後の行は`</code>`の直前にくっつける
+                # 複数行のとき
+                if len(codeblock_buffer) > 1:
+                    html.append(codeblock_buffer[-1] + "</code>")
+                # コードブロック内が1行だけのとき
+                else:
+                    html[-1] += "</code>"
                 # 閉じタグ
-                html.append("</code>")
                 html.append("</pre>")
                 # 折りたたみありの場合
                 if folding:
-                    html.append(item)
-                    
+                    html.append("</details>")
+
                 # 状態リセット
                 codeblock_buffer.clear()
                 in_codeblock = False
