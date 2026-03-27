@@ -120,6 +120,8 @@ def convert_paragraphs(lines: List[str]) -> List[str]:
     in_table = False
     in_bullet_list = False
     in_number_list = False
+    # コードブロック先頭行を保持しておく変数
+    code_fence_open_line = None
     # コードブロック用の行をため込むリストを用意
     codeblock_buffer = []
     # テーブル要素用の行をため込むリストを用意
@@ -140,15 +142,21 @@ def convert_paragraphs(lines: List[str]) -> List[str]:
             # 閉じ3連バッククォートが来た
             #   -> 閉じタグに変換してフラグを倒す
             if lt == "code_fence":
-                # 折り畳みありのとき
+                tags, folding = convert_2_start_codeblock(code_fence_open_line)
+                html.extend(tags)
+                # ため込んでいたコードブロックの内容を展開
+                for item in codeblock_buffer:
+                    html.append(item)
+
+                # 閉じタグ
+                html.append("</code>")
+                html.append("</pre>")
+                # 折りたたみありの場合
                 if folding:
-                    html.append("</code>")
-                    html.append("</pre>")
-                    html.append("</details>")
-                # 折り畳みなしのとき
-                else:
-                    html.append("</code>")
-                    html.append("</pre>")
+                    html.append(item)
+                    
+                # 状態リセット
+                codeblock_buffer.clear()
                 in_codeblock = False
             else:
                 codeblock_buffer.append(line)
@@ -183,6 +191,8 @@ def convert_paragraphs(lines: List[str]) -> List[str]:
             html.append(convert_2_heading(line, state, in_column))
         # コードブロック開始（```）
         elif lt == "code_fence":
+            # この行を覚えておく
+            code_fence_open_line = line
             # コードブロックフラグを立てる
             in_codeblock = True
         # ブロック引用開始（>>>）
