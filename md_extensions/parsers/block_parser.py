@@ -120,6 +120,8 @@ def convert_paragraphs(lines: List[str]) -> List[str]:
     in_table = False
     in_bullet_list = False
     in_number_list = False
+    # コードブロック用の行をため込むリストを用意
+    codeblock_buffer = []
     # テーブル要素用の行をため込むリストを用意
     table_buffer = []
     # 箇条書きの`li`をため込むリストを用意
