@@ -185,8 +185,6 @@ def convert_paragraphs(lines: List[str]) -> List[str]:
         elif lt == "code_fence":
             # コードブロックフラグを立てる
             in_codeblock = True
-            tags, folding = convert_2_start_codeblock(line)
-            html.extend(tags)
         # ブロック引用開始（>>>）
         elif lt == "blockquote_start":
             if not in_blockquote:
