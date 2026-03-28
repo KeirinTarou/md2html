@@ -2,3 +2,4 @@ dest/
 src/
 __pycache__
 .venv/
+.pytest_cache/
